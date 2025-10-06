@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee - Company Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="home.html">
+                <img src="https://via.placeholder.com/40x40?text=Logo" alt="Logo" class="me-2 rounded-circle">
+                <span class="fw-bold">Company Portal</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="../index.html">Index</a></li>
+                    <li class="nav-item"><a class="nav-link" href="hr.html">HR</a></li>
+                    <li class="nav-item"><a class="nav-link" href="employee.html">Employee</a></li>
+                    <li class="nav-item"><a class="nav-link" href="customer.html">Customer</a></li>
+                    <li class="nav-item"><a class="nav-link" href="projects.html">Projects</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <section class="container my-5">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h1 class="card-title border-bottom pb-2 mb-3">Employee Portal</h1>
+                <p class="card-text">Track attendance, work hours, and completed tasks. Access training resources and collaborate with your team.</p>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Employee Account</h2>
+                <ul class="nav nav-tabs mb-3" role="tablist">
+                    <li class="nav-item"><button class="nav-link active" data-bs-target="#emp-login" type="button">Login</button></li>
+                    <li class="nav-item"><button class="nav-link" data-bs-target="#emp-signup" type="button">Sign Up</button></li>
+                </ul>
+
+                <div id="emp-login">
+                    <div id="loggedInView" class="d-none">
+                        <p class="mb-2">You are logged in as <strong id="loggedInName"></strong></p>
+                        <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+                    </div>
+
+                        <div id="employeeCard" class="card mt-3 d-none" style="width:320px">
+                            <div class="card-body">
+                                <h5 class="card-title">Employee ID Card</h5>
+                                <p class="mb-1"><strong>ID:</strong> <span id="cardId"></span></p>
+                                <p class="mb-1"><strong>Name:</strong> <span id="cardName"></span></p>
+                                <p class="mb-1"><strong>Dept:</strong> <span id="cardDept"></span></p>
+                                <p class="mb-1"><strong>Email:</strong> <span id="cardEmail"></span></p>
+                                <p class="mb-1"><strong>Contact:</strong> <span id="cardContact"></span></p>
+                                <div class="mt-3 d-flex gap-2">
+                                    <button id="printCardBtn" class="btn btn-sm btn-outline-primary">Print</button>
+                                    <button id="downloadCardBtn" class="btn btn-sm btn-outline-success">Download PNG</button>
+                                    <button id="toggleQrBtn" class="btn btn-sm btn-outline-secondary">Show QR</button>
+                                </div>
+                                <div id="cardQr" class="mt-3 d-none text-center">
+                                    <img id="cardQrImg" alt="QR code" style="width:160px;height:160px;border:1px solid #ddd;border-radius:4px" />
+                                </div>
+                            </div>
+                        </div>
+
+                    <form id="employeeLoginForm">
+                        <div class="mb-2"><label for="empId" class="form-label">Employee ID</label><input id="empId" type="text" class="form-control" required></div>
+                        <div class="mb-2"><label for="empPassword" class="form-label">Password</label><input id="empPassword" type="password" class="form-control" required minlength="6"></div>
+                        <div class="form-check mb-2"><input id="empRemember" type="checkbox" class="form-check-input"><label for="empRemember" class="form-check-label">Remember me</label></div>
+                        <button type="submit" class="btn btn-primary">Login</button>
+                    </form>
+                </div>
+
+                <div id="emp-signup" class="d-none">
+                    <form id="employeeSignupForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-2"><label for="empName" class="form-label">Full name</label><input id="empName" type="text" class="form-control" required></div>
+                            <div class="col-md-6 mb-2"><label for="empDept" class="form-label">Department</label><input id="empDept" type="text" class="form-control"></div>
+                        </div>
+                        <!-- Employee ID removed from signup: will be assigned by HR on approval -->
+                        <div class="mb-2"><label for="empEmail" class="form-label">Work email</label><input id="empEmail" type="email" class="form-control"></div>
+                        <div class="mb-2"><label for="empContact" class="form-label">Contact (phone or email for OTP)</label><input id="empContact" type="text" class="form-control" placeholder="e.g. +123456789 or user@example.com"></div>
+                        <div class="mb-2"><label for="empPassword2" class="form-label">Password</label><input id="empPassword2" type="password" class="form-control" required minlength="6"></div>
+                        <button type="submit" class="btn btn-success">Create employee (send OTP)</button>
+                    </form>
+
+                    <div id="emp-verify-otp" class="d-none mt-3">
+                        <p class="small text-muted" id="otpMessage">An OTP was sent to your contact. Enter it below to verify your account.</p>
+                        <div class="mb-2"><input id="empOtpInput" type="text" class="form-control" placeholder="Enter OTP"></div>
+                        <div class="d-flex gap-2">
+                            <button id="verifyOtpBtn" class="btn btn-primary">Verify OTP</button>
+                            <button id="resendOtpBtn" class="btn btn-outline-secondary">Resend OTP</button>
+                            <button id="cancelOtpBtn" class="btn btn-link">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container text-center">
+            <small>&copy; 2025 Company Name. All rights reserved.</small>
+        </div>
+    </footer>
+    <script>
+        (function(){
+            // Configuration: demo backend server base URL (leave blank to use built-in client-only demo)
+            const SERVER_BASE = 'http://localhost:3001';
+
+            function serverAvailable(){ return !!SERVER_BASE; }
+
+            // UI helpers
+            function showTab(targetId){
+                document.querySelectorAll('.nav-tabs .nav-link').forEach(b=>b.classList.toggle('active', b.getAttribute('data-bs-target')===('#'+targetId)));
+                document.getElementById('emp-login').classList.toggle('d-none', targetId!=='emp-login');
+                document.getElementById('emp-signup').classList.toggle('d-none', targetId!=='emp-signup');
+            }
+
+            // init tab buttons
+            document.querySelectorAll('.nav-tabs .nav-link').forEach(btn=>{
+                btn.addEventListener('click', ()=>{
+                    const tgt = btn.getAttribute('data-bs-target').replace('#','');
+                    showTab(tgt);
+                });
+            });
+
+            // Signup flow: collect details, send OTP, then verify
+            const signupForm = document.getElementById('employeeSignupForm');
+            const verifyBox = document.getElementById('emp-verify-otp');
+            let currentSignupPayload = null;
+
+                signupForm.addEventListener('submit', async function(e){
+                e.preventDefault();
+                const name = document.getElementById('empName').value.trim();
+                const dept = document.getElementById('empDept').value.trim();
+                const email = document.getElementById('empEmail').value.trim();
+                const contact = document.getElementById('empContact').value.trim() || email || employeeId;
+                const password = document.getElementById('empPassword2').value;
+
+                if(!name || !password){ alert('Please fill required fields: name and password'); return; }
+
+                if(serverAvailable()){
+                    // call server /signup - pass provisional id as email/contact
+                    try{
+                        const provisionalId = email || contact || name;
+                        const res = await fetch(SERVER_BASE + '/signup', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ role:'employee', id: provisionalId, name, dept, email, contact, password }) });
+                        const data = await res.json();
+                        if(!res.ok) return alert('Signup error: ' + (data.error || res.status));
+                        currentSignupPayload = { requestId: data.requestId, contact };
+                        // show masked contact; if server exposed OTP include it in UI for demo
+                        if(data.otp){
+                            document.getElementById('otpMessage').textContent = `Demo OTP: ${data.otp} (auto-filled)`;
+                            // prefill OTP input so user doesn't have to type it
+                            const input = document.getElementById('empOtpInput'); if(input) input.value = data.otp;
+                        } else {
+                            document.getElementById('otpMessage').textContent = `An OTP was sent to ${data.masked}. Enter it below.`;
+                        }
+                        verifyBox.classList.remove('d-none'); signupForm.classList.add('d-none');
+                    }catch(err){ console.error(err); alert('Could not reach server; falling back to demo mode'); clientSignupFallback(name,dept,email,contact,password); }
+                } else {
+                    clientSignupFallback(name,dept,email,contact,password);
+                }
+            });
+
+            function clientSignupFallback(name,dept,email,contact,password){
+                // store pending signup in localStorage and show OTP printed on console
+                const pendingKey = 'demo_pending_employees';
+                const pending = JSON.parse(localStorage.getItem(pendingKey) || '[]');
+                const requestId = 'local-'+Date.now();
+                const otp = String(Math.floor(100000 + Math.random()*900000));
+                const rec = { requestId, role:'employee', id: email || contact || ('local-'+Date.now()), name, dept, email, contact, passwordHash: password, otp, verified:false, expiresAt: Date.now() + 5*60*1000 };
+                pending.push(rec);
+                localStorage.setItem(pendingKey, JSON.stringify(pending));
+                currentSignupPayload = { requestId, contact };
+                pendingLocalOtp = otp;
+                console.log('[client-demo] OTP for', contact, 'is', otp);
+                // show OTP to user and prefill
+                document.getElementById('otpMessage').textContent = `Demo OTP: ${otp} (auto-filled)`;
+                const input = document.getElementById('empOtpInput'); if(input) input.value = otp;
+                verifyBox.classList.remove('d-none'); signupForm.classList.add('d-none');
+            }
+
+            function maskContact(c){
+                if(!c) return 'unknown';
+                if(c.includes('@')){
+                    const parts = c.split('@');
+                    const name = parts[0];
+                    return name[0] + '***@' + parts[1];
+                }
+                if(c.length<=4) return '***'+c;
+                return c.slice(0,2)+'***'+c.slice(-2);
+            }
+
+            document.getElementById('verifyOtpBtn').addEventListener('click', async function(){
+                const val = document.getElementById('empOtpInput').value.trim();
+                if(!val){ alert('Enter the OTP'); return; }
+
+                if(serverAvailable() && currentSignupPayload && currentSignupPayload.requestId){
+                    try{
+                        const res = await fetch(SERVER_BASE + '/verify-otp', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ requestId: currentSignupPayload.requestId, otp: val }) });
+                        const data = await res.json();
+                        if(!res.ok) return alert('Verification error: ' + (data.error || res.status));
+                        if(data.status === 'pending_approval'){
+                            alert('Verified. Awaiting HR approval.');
+                        } else {
+                            alert('Account created: ' + data.name);
+                        }
+                        currentSignupPayload = null;
+                        document.getElementById('empOtpInput').value = '';
+                        verifyBox.classList.add('d-none'); signupForm.reset(); signupForm.classList.remove('d-none');
+                        showTab('emp-login');
+                        return;
+                    }catch(err){ console.error(err); alert('Server error while verifying; try again'); }
+                }
+
+                // fallback client-only verification using pending list in localStorage
+                const pendingKey = 'demo_pending_employees';
+                const pending = JSON.parse(localStorage.getItem(pendingKey) || '[]');
+                const recIndex = pending.findIndex(p => p.requestId === currentSignupPayload.requestId);
+                if(recIndex === -1) return alert('No pending signup found. Please signup again.');
+                const rec = pending[recIndex];
+                if(Date.now() > rec.expiresAt) { pending.splice(recIndex,1); localStorage.setItem(pendingKey, JSON.stringify(pending)); return alert('OTP expired, please signup again'); }
+                if(rec.otp !== val) return alert('Invalid OTP');
+                // mark verified and leave for HR approval
+                pending[recIndex].verified = true;
+                localStorage.setItem(pendingKey, JSON.stringify(pending));
+                alert('Verified locally. Awaiting HR approval (demo).');
+                currentSignupPayload = null; document.getElementById('empOtpInput').value = ''; verifyBox.classList.add('d-none'); signupForm.reset(); signupForm.classList.remove('d-none'); showTab('emp-login');
+            });
+
+            document.getElementById('resendOtpBtn').addEventListener('click', async function(){
+                if(!currentSignupPayload){ alert('Nothing to resend'); return; }
+                if(serverAvailable() && currentSignupPayload.requestId){
+                    try{
+                        // for simplicity ask server to recreate a new signup (could implement separate resend endpoint)
+                        const res = await fetch(SERVER_BASE + '/signup', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name: document.getElementById('empName').value.trim(), dept: document.getElementById('empDept').value.trim(), employeeId: document.getElementById('empEmployeeId').value.trim(), email: document.getElementById('empEmail').value.trim(), contact: document.getElementById('empContact').value.trim(), password: document.getElementById('empPassword2').value }) });
+                        const data = await res.json();
+                        if(!res.ok) return alert('Resend error: ' + (data.error || res.status));
+                        currentSignupPayload.requestId = data.requestId;
+                        alert('OTP resent (masked: ' + data.masked + ')');
+                        return;
+                    }catch(err){ console.error(err); alert('Could not reach server to resend.'); }
+                }
+                // client fallback
+                pendingLocalOtp = String(Math.floor(100000 + Math.random()*900000));
+                console.log('[client-demo] OTP resent for', currentSignupPayload.contact, pendingLocalOtp);
+                alert('Demo: OTP resent (check console)');
+            });
+            document.getElementById('cancelOtpBtn').addEventListener('click', function(){
+                currentSignupPayload = null;
+                document.getElementById('empOtpInput').value = '';
+                verifyBox.classList.add('d-none');
+                signupForm.classList.remove('d-none');
+            });
+
+            // storage & session helpers (used by both server and client fallback)
+            const USERS_KEY = 'demo_employees_v1';
+            const SESSION_KEY = 'demo_employee_session';
+            function readUsers(){ try{ return JSON.parse(localStorage.getItem(USERS_KEY) || '{}'); } catch(e){ return {}; } }
+            function writeUsers(obj){ localStorage.setItem(USERS_KEY, JSON.stringify(obj)); }
+            function setSession(obj){ localStorage.setItem(SESSION_KEY, JSON.stringify(obj)); }
+            function getSession(){ try{ return JSON.parse(localStorage.getItem(SESSION_KEY)); }catch(e){return null;} }
+            function clearSession(){ localStorage.removeItem(SESSION_KEY); }
+
+            // Login: check against stored users, support remember-me
+            const loginForm = document.getElementById('employeeLoginForm');
+            loginForm.addEventListener('submit', async function(e){
+                e.preventDefault();
+                const id = document.getElementById('empId').value.trim();
+                const pw = document.getElementById('empPassword').value;
+                const remember = document.getElementById('empRemember').checked;
+
+                if(serverAvailable()){
+                    try{
+                        const res = await fetch(SERVER_BASE + '/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ role:'employee', id: id, password: pw }) });
+                        const data = await res.json();
+                        if(!res.ok) return alert('Login failed: ' + (data.error || res.status));
+                        // store session client-side for demo
+                        setSession({ employeeId: id, name: data.name, token: data.token, remember, dept: data.dept, email: data.email, contact: data.contact });
+                        showLoggedIn(data.name, { id: id, name: data.name, dept: data.dept, email: data.email, contact: data.contact });
+                        return;
+                    }catch(err){ console.error(err); alert('Could not reach server; falling back to demo mode'); }
+                }
+
+                // fallback to localStorage demo
+                try{
+                    const users = readUsers();
+                    const user = users[id];
+                    if(!user || user.password !== pw){ alert('Invalid credentials'); return; }
+                    setSession({ employeeId: id, name: user.name, remember, dept: user.dept, email: user.email, contact: user.contact });
+                    showLoggedIn(user.name, { id: id, name: user.name, dept: user.dept, email: user.email, contact: user.contact });
+                }catch(err){ console.error(err); alert('Login error'); }
+            });
+
+            function showLoggedIn(name, user){
+                document.getElementById('loggedInName').textContent = name;
+                document.getElementById('loggedInView').classList.remove('d-none');
+                document.getElementById('employeeLoginForm').classList.add('d-none');
+                if(user){
+                    // populate card
+                    document.getElementById('cardId').textContent = user.id || getSession()?.employeeId || '';
+                    document.getElementById('cardName').textContent = user.name || '';
+                    document.getElementById('cardDept').textContent = user.dept || '';
+                    document.getElementById('cardEmail').textContent = user.email || '';
+                    document.getElementById('cardContact').textContent = user.contact || '';
+                    document.getElementById('employeeCard').classList.remove('d-none');
+                }
+            }
+
+            document.getElementById('logoutBtn').addEventListener('click', function(){
+                clearSession();
+                document.getElementById('loggedInView').classList.add('d-none');
+                document.getElementById('employeeLoginForm').classList.remove('d-none');
+                document.getElementById('employeeCard').classList.add('d-none');
+                document.getElementById('cardId').textContent = '';
+                document.getElementById('cardName').textContent = '';
+                document.getElementById('cardDept').textContent = '';
+                document.getElementById('cardEmail').textContent = '';
+                document.getElementById('cardContact').textContent = '';
+            });
+
+            // Prefill login fields if we have remembered user
+            (function restore(){
+                const session = getSession();
+                if(session){
+                    const users = readUsers();
+                    const u = users[session.employeeId];
+                    if(u){
+                        if(session.remember){
+                            // auto login display
+                            showLoggedIn(u.name);
+                        } else {
+                            // prefill id only
+                            document.getElementById('empId').value = session.employeeId;
+                        }
+                    }
+                }
+            })();
+
+            // For convenience, prefill login id with last created user
+            (function prefillLast(){
+                const users = readUsers();
+                const keys = Object.keys(users);
+                if(keys.length && !document.getElementById('empId').value){
+                    document.getElementById('empId').value = keys[keys.length-1];
+                }
+            })();
+
+        })();
+    </script>
+    <!-- html2canvas for screenshot/download -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script>
+        (function(){
+            function buildQrData(user){
+                return JSON.stringify({ id: user.id, name: user.name, dept: user.dept, email: user.email });
+            }
+
+            document.getElementById('printCardBtn').addEventListener('click', function(){
+                const el = document.getElementById('employeeCard');
+                if(!el) return;
+                const w = window.open('', '_blank');
+                const html = '<html><head><title>ID Card</title><link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"></head><body>' + el.outerHTML + '</body></html>';
+                w.document.write(html); w.document.close();
+                w.focus();
+                setTimeout(()=>{ w.print(); w.close(); }, 500);
+            });
+
+            document.getElementById('downloadCardBtn').addEventListener('click', function(){
+                const el = document.getElementById('employeeCard');
+                if(!el) return alert('No card to download');
+                html2canvas(el).then(canvas=>{
+                    const a = document.createElement('a'); a.href = canvas.toDataURL('image/png'); a.download = (document.getElementById('cardId').textContent || 'employee') + '.png';
+                    document.body.appendChild(a); a.click(); a.remove();
+                }).catch(err=>{ console.error(err); alert('Could not create image'); });
+            });
+
+            document.getElementById('toggleQrBtn').addEventListener('click', function(){
+                const qr = document.getElementById('cardQr');
+                const img = document.getElementById('cardQrImg');
+                if(qr.classList.contains('d-none')){
+                    // create QR using Google Chart API (simple, no libs)
+                    const data = buildQrData({ id: document.getElementById('cardId').textContent, name: document.getElementById('cardName').textContent, dept: document.getElementById('cardDept').textContent, email: document.getElementById('cardEmail').textContent });
+                    const encoded = encodeURIComponent(data);
+                    img.src = `https://chart.googleapis.com/chart?cht=qr&chs=160x160&chl=${encoded}`;
+                    qr.classList.remove('d-none');
+                    this.textContent = 'Hide QR';
+                } else {
+                    qr.classList.add('d-none'); this.textContent = 'Show QR';
+                }
+            });
+        })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

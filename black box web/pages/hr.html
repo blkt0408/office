@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR - Company Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="home.html">
+                <img src="https://via.placeholder.com/40x40?text=Logo" alt="Logo" class="me-2 rounded-circle">
+                <span class="fw-bold">Company Portal</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="../index.html">Index</a></li>
+                    <li class="nav-item"><a class="nav-link" href="hr.html">HR</a></li>
+                    <li class="nav-item"><a class="nav-link" href="employee.html">Employee</a></li>
+                    <li class="nav-item"><a class="nav-link" href="customer.html">Customer</a></li>
+                    <li class="nav-item"><a class="nav-link" href="projects.html">Projects</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <section class="container my-5">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h1 class="card-title border-bottom pb-2 mb-3">HR Portal</h1>
+                <p class="card-text">Access HR resources, policies, and support. Manage employee records, recruitment, and compliance efficiently.</p>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h5 mb-3">HR Account</h2>
+                <ul class="nav nav-tabs mb-3" role="tablist">
+                    <li class="nav-item"><button class="nav-link active" data-bs-target="#hr-login" type="button">Login</button></li>
+                    <li class="nav-item"><button class="nav-link" data-bs-target="#hr-signup" type="button">Sign Up</button></li>
+                </ul>
+
+                <div id="hr-login">
+                    <form id="hrLoginForm">
+                        <div class="mb-2"><label for="hrUser" class="form-label">Username / Email</label><input id="hrUser" type="text" class="form-control" required></div>
+                        <div class="mb-2"><label for="hrPassword" class="form-label">Password</label><input id="hrPassword" type="password" class="form-control" required minlength="6"></div>
+                        <button type="submit" class="btn btn-primary">Login</button>
+                    </form>
+                </div>
+
+                <div id="hr-signup" class="d-none">
+                    <form id="hrSignupForm">
+                        <div class="mb-2"><label for="hrName" class="form-label">Full name</label><input id="hrName" type="text" class="form-control" required></div>
+                        <div class="mb-2"><label for="hrEmail" class="form-label">Work email</label><input id="hrEmail" type="email" class="form-control" required></div>
+                        <div class="mb-2"><label for="hrPassword2" class="form-label">Password</label><input id="hrPassword2" type="password" class="form-control" required minlength="6"></div>
+                        <button type="submit" class="btn btn-success">Create HR account</button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+        
+        <div id="pending-approvals-card" class="card shadow-sm mt-4 d-none">
+            <div class="card-body">
+                <h2 class="h6">Pending Employee Approvals</h2>
+                <div id="pendingList">Loading...</div>
+            </div>
+        </div>
+    </section>
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container text-center">
+            <small>&copy; 2025 Company Name. All rights reserved.</small>
+        </div>
+    </footer>
+    <script>
+        (function(){
+            const SERVER_BASE = 'http://localhost:3001';
+            function serverAvailable(){ return !!SERVER_BASE; }
+
+            document.querySelectorAll('.nav-tabs .nav-link').forEach(btn=>{
+                btn.addEventListener('click', ()=>{
+                    document.querySelectorAll('.nav-tabs .nav-link').forEach(b=>b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const target = btn.getAttribute('data-bs-target');
+                    document.getElementById('hr-login').classList.add('d-none');
+                    document.getElementById('hr-signup').classList.add('d-none');
+                    document.querySelector(target).classList.remove('d-none');
+                });
+            });
+
+            // fallback storage for HR demo
+            const STORAGE_KEY = 'demo_hr_v1';
+            function readHR(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'); }catch(e){return{}} }
+            function writeHR(o){ localStorage.setItem(STORAGE_KEY, JSON.stringify(o)); }
+
+            // signup with OTP UI
+            const signupForm = document.getElementById('hrSignupForm');
+            let pendingLocalOtp = undefined; let currentSignup = null;
+            const verifyDiv = document.createElement('div'); verifyDiv.innerHTML = `\n                <div id="hr-verify" class="mt-3 d-none">\n                    <p class="small text-muted" id="hrOtpMsg">OTP sent (demo)</p>\n                    <div class="mb-2"><input id="hrOtpInput" class="form-control" placeholder="Enter OTP"></div>\n                    <div class="d-flex gap-2"><button id="hrVerifyBtn" class="btn btn-primary">Verify OTP</button><button id="hrResendBtn" class="btn btn-outline-secondary">Resend</button></div>\n                </div>`;
+            document.getElementById('hr-signup').appendChild(verifyDiv);
+
+            signupForm.addEventListener('submit', async function(e){
+                e.preventDefault();
+                const name = document.getElementById('hrName').value.trim();
+                const email = document.getElementById('hrEmail').value.trim();
+                const password = document.getElementById('hrPassword2').value;
+                if(!name || !email || !password) return alert('name, email and password required');
+
+                if(serverAvailable()){
+                    try{
+                        const res = await fetch(SERVER_BASE + '/signup', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ role:'hr', id: email, name, contact: email, email, password }) });
+                        const data = await res.json(); if(!res.ok) return alert('Signup error: '+(data.error||res.status));
+                        currentSignup = { requestId: data.requestId, id: email };
+                        if(data.otp){
+                            document.getElementById('hrOtpMsg').textContent = `Demo OTP: ${data.otp} (auto-filled)`;
+                            const otpInput = document.getElementById('hrOtpInput'); if(otpInput) otpInput.value = data.otp;
+                        } else {
+                            document.getElementById('hrOtpMsg').textContent = `OTP sent to ${data.masked}`;
+                        }
+                        document.getElementById('hr-verify').classList.remove('d-none'); signupForm.classList.add('d-none');
+                        return;
+                    }catch(err){ console.error(err); alert('Server error; using demo fallback'); }
+                }
+                pendingLocalOtp = String(Math.floor(100000 + Math.random()*900000));
+                currentSignup = { id: email, name, password };
+                console.log('[client-demo] hr OTP', pendingLocalOtp);
+                document.getElementById('hrOtpMsg').textContent = `Demo OTP: ${pendingLocalOtp} (auto-filled)`;
+                const otpInput = document.getElementById('hrOtpInput'); if(otpInput) otpInput.value = pendingLocalOtp;
+                document.getElementById('hr-verify').classList.remove('d-none'); signupForm.classList.add('d-none');
+            });
+
+            document.getElementById('hrVerifyBtn').addEventListener('click', async function(){
+                const val = document.getElementById('hrOtpInput').value.trim(); if(!val) return alert('Enter OTP');
+                if(serverAvailable() && currentSignup && currentSignup.requestId){
+                    try{
+                        const res = await fetch(SERVER_BASE + '/verify-otp', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ requestId: currentSignup.requestId, otp: val }) });
+                        const data = await res.json(); if(!res.ok) return alert('Verify error: '+(data.error||res.status));
+                        alert('HR account created: '+data.name); currentSignup=null; document.getElementById('hr-verify').classList.add('d-none'); signupForm.reset(); signupForm.classList.remove('d-none'); document.querySelector('.nav-tabs .nav-link[data-bs-target="#hr-login"]').click(); return;
+                    }catch(err){ console.error(err); alert('Server verify error'); }
+                }
+                if(pendingLocalOtp !== val) return alert('Invalid OTP');
+                const hr = readHR(); hr[currentSignup.id] = { name: currentSignup.name, password: currentSignup.password }; writeHR(hr);
+                alert('HR account created (demo)'); currentSignup=null; pendingLocalOtp=undefined; document.getElementById('hr-verify').classList.add('d-none'); signupForm.reset(); signupForm.classList.remove('d-none'); document.querySelector('.nav-tabs .nav-link[data-bs-target="#hr-login"]').click();
+            });
+
+            // Login
+            document.getElementById('hrLoginForm').addEventListener('submit', async function(e){
+                e.preventDefault(); const user = document.getElementById('hrUser').value.trim(); const pw = document.getElementById('hrPassword').value;
+                if(serverAvailable()){
+                    try{
+                        const res = await fetch(SERVER_BASE + '/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ role:'hr', id: user, password: pw }) });
+                        const data = await res.json(); if(!res.ok) return alert('Login failed: '+(data.error||res.status));
+                        alert('Logged in (server): '+data.name);
+                        onHrLoggedIn(data.name, true);
+                        return;
+                    }catch(err){ console.error(err); alert('Server error; try demo fallback'); }
+                }
+                const hr = readHR(); const u = hr[user]; if(!u || u.password !== pw) return alert('Invalid credentials'); alert('Logged in (demo): '+u.name);
+                onHrLoggedIn(u.name, false);
+            });
+
+            // When HR logs in, show pending approvals
+            function onHrLoggedIn(name, isServer){
+                // show approvals card
+                document.getElementById('pending-approvals-card').classList.remove('d-none');
+                loadPending();
+            }
+
+            async function loadPending(){
+                const container = document.getElementById('pendingList');
+                container.innerHTML = 'Loading...';
+                if(serverAvailable()){
+                    try{
+                        const res = await fetch(SERVER_BASE + '/pending?role=employee');
+                        const list = await res.json();
+                        renderPending(list);
+                        return;
+                    }catch(err){ console.error(err); container.innerHTML = 'Could not load pending (server)'; }
+                }
+                // client-only fallback: load pending from localStorage
+                const pending = JSON.parse(localStorage.getItem('demo_pending_employees') || '[]');
+                const list = pending.filter(p => p.role === 'employee' && p.verified);
+                if(!list.length) { container.innerHTML = '<div class="text-muted">No pending signups (client demo)</div>'; return; }
+                renderPending(list);
+            }
+
+            function renderPending(list){
+                const container = document.getElementById('pendingList');
+                if(!list || !list.length) { container.innerHTML = '<div class="text-muted">No pending signups</div>'; return; }
+                container.innerHTML = '';
+                list.forEach(item=>{
+                    const div = document.createElement('div');
+                    div.className = 'border rounded p-2 mb-2';
+                    div.innerHTML = `<div><strong>${escapeHtml(item.name)}</strong> — ${escapeHtml(item.email||item.contact||item.id||'')}</div><div class="mt-2"><button data-req="${item.requestId}" class="btn btn-sm btn-success approveBtn">Approve</button> <button data-req="${item.requestId}" class="btn btn-sm btn-danger rejectBtn">Reject</button></div>`;
+                    container.appendChild(div);
+                });
+                container.querySelectorAll('.approveBtn').forEach(b=>b.addEventListener('click', onApprove));
+                container.querySelectorAll('.rejectBtn').forEach(b=>b.addEventListener('click', onReject));
+            }
+
+            function escapeHtml(s){ return String(s||'').replace(/[&<>"']/g, c=> ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+            function genTempPassword(len = 8){
+                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+                let out = '';
+                for(let i=0;i<len;i++) out += chars[Math.floor(Math.random()*chars.length)];
+                return out;
+            }
+
+            async function onApprove(e){
+                const req = e.currentTarget.getAttribute('data-req');
+                if(!confirm('Approve this signup?')) return;
+                if(serverAvailable()){
+                    const res = await fetch(SERVER_BASE + '/approve', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ requestId: req }) });
+                    const data = await res.json(); if(!res.ok) return alert('Approve error: '+(data.error||res.status));
+                    // show assigned id and temp password (if provided by server)
+                    let msg = 'Approved: assigned id ' + data.id;
+                    if(data.tempPassword) msg += '\nTemporary password: ' + data.tempPassword + '\nShare this securely with the employee.';
+                    alert(msg);
+                    loadPending();
+                    return;
+                }
+                // client-only approve: read pending from localStorage, assign EMP id, move to users in localStorage
+                const pending = JSON.parse(localStorage.getItem('demo_pending_employees') || '[]');
+                const idx = pending.findIndex(p => p.requestId === req);
+                if(idx === -1) return alert('Pending not found');
+                const rec = pending[idx];
+                // assign EMP id
+                const usersKey = 'demo_employees_v1';
+                const users = JSON.parse(localStorage.getItem(usersKey) || '{}');
+                const existing = Object.keys(users).filter(k=>k.startsWith('EMP')).length;
+                const next = existing + 1; const assignedId = 'EMP'+String(next).padStart(4,'0');
+                // generate a temporary password for the new employee in demo fallback
+                const tempPassword = genTempPassword(8);
+                users[assignedId] = { name: rec.name, dept: rec.dept, email: rec.email, contact: rec.contact, password: tempPassword };
+                localStorage.setItem(usersKey, JSON.stringify(users));
+                // remove pending
+                pending.splice(idx,1); localStorage.setItem('demo_pending_employees', JSON.stringify(pending));
+                alert('Approved (client demo). Assigned ID: ' + assignedId + '\nTemporary password: ' + tempPassword + '\nShare this securely with the employee.');
+                loadPending();
+            }
+
+            async function onReject(e){
+                const req = e.currentTarget.getAttribute('data-req');
+                if(!confirm('Reject this signup?')) return;
+                if(serverAvailable()){
+                    const res = await fetch(SERVER_BASE + '/reject', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ requestId: req }) });
+                    const data = await res.json(); if(!res.ok) return alert('Reject error: '+(data.error||res.status));
+                    alert('Rejected'); loadPending(); return;
+                }
+                // client-only reject: remove from localStorage pending
+                const pending = JSON.parse(localStorage.getItem('demo_pending_employees') || '[]');
+                const idx = pending.findIndex(p => p.requestId === req);
+                if(idx === -1) return alert('Pending not found');
+                pending.splice(idx,1); localStorage.setItem('demo_pending_employees', JSON.stringify(pending));
+                alert('Rejected (client demo)'); loadPending();
+            }
+
+        })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

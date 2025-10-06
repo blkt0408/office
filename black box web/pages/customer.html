@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer - Company Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="home.html">
+                <img src="https://via.placeholder.com/40x40?text=Logo" alt="Logo" class="me-2 rounded-circle">
+                <span class="fw-bold">Company Portal</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="../index.html">Index</a></li>
+                    <li class="nav-item"><a class="nav-link" href="hr.html">HR</a></li>
+                    <li class="nav-item"><a class="nav-link" href="employee.html">Employee</a></li>
+                    <li class="nav-item"><a class="nav-link" href="customer.html">Customer</a></li>
+                    <li class="nav-item"><a class="nav-link" href="projects.html">Projects</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <section class="container my-5">
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <h1 class="card-title border-bottom pb-2 mb-3">Customer Portal</h1>
+                <p class="card-text">Sign up, log in, and manage your account. Get support, track orders, and stay updated on new products and services.</p>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Account</h2>
+                <ul class="nav nav-tabs mb-3" role="tablist">
+                    <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-target="#cust-login" type="button">Login</button></li>
+                    <li class="nav-item" role="presentation"><button class="nav-link" data-bs-target="#cust-signup" type="button">Sign Up</button></li>
+                </ul>
+
+                <div id="cust-login">
+                    <form id="customerLoginForm">
+                        <div class="mb-2"><label for="custEmail" class="form-label">Email</label><input id="custEmail" type="email" class="form-control" required></div>
+                        <div class="mb-2"><label for="custPassword" class="form-label">Password</label><input id="custPassword" type="password" class="form-control" required minlength="6"></div>
+                        <button type="submit" class="btn btn-primary">Login</button>
+                    </form>
+                </div>
+
+                <div id="cust-signup" class="d-none">
+                    <form id="customerSignupForm">
+                        <div class="mb-2"><label for="custName" class="form-label">Full name</label><input id="custName" type="text" class="form-control" required></div>
+                        <div class="mb-2"><label for="custEmail2" class="form-label">Email</label><input id="custEmail2" type="email" class="form-control" required></div>
+                        <div class="mb-2"><label for="custPhone" class="form-label">Phone</label><input id="custPhone" type="tel" class="form-control"></div>
+                        <div class="mb-2"><label for="custPassword2" class="form-label">Password</label><input id="custPassword2" type="password" class="form-control" required minlength="6"></div>
+                        <button type="submit" class="btn btn-success">Sign Up</button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </section>
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container text-center">
+            <small>&copy; 2025 Company Name. All rights reserved.</small>
+        </div>
+    </footer>
+    <script>
+        (function(){
+            const SERVER_BASE = 'http://localhost:3001';
+            function serverAvailable(){ return !!SERVER_BASE; }
+
+            // tab switching
+            document.querySelectorAll('.nav-tabs .nav-link').forEach(btn=>{
+                btn.addEventListener('click', ()=>{
+                    document.querySelectorAll('.nav-tabs .nav-link').forEach(b=>b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const target = btn.getAttribute('data-bs-target');
+                    document.getElementById('cust-login').classList.add('d-none');
+                    document.getElementById('cust-signup').classList.add('d-none');
+                    document.querySelector(target).classList.remove('d-none');
+                });
+            });
+
+            // simple client-only demo storage (fallback)
+            const STORAGE_KEY = 'demo_customers_v1';
+            function readCustomers(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}'); }catch(e){return{}} }
+            function writeCustomers(o){ localStorage.setItem(STORAGE_KEY, JSON.stringify(o)); }
+
+            // Signup
+            const signupForm = document.getElementById('customerSignupForm');
+            let pendingLocalOtp = undefined;
+            let currentSignup = null;
+            const verifyUi = document.createElement('div');
+            verifyUi.innerHTML = `\n                <div id="cust-verify" class="mt-3 d-none">\n                    <p class="small text-muted" id="custOtpMsg">OTP sent (demo)</p>\n                    <div class="mb-2"><input id="custOtpInput" class="form-control" placeholder="Enter OTP"></div>\n                    <div class="d-flex gap-2"><button id="custVerifyBtn" class="btn btn-primary">Verify OTP</button><button id="custResendBtn" class="btn btn-outline-secondary">Resend</button></div>\n                </div>`;
+            document.getElementById('cust-signup').appendChild(verifyUi);
+
+            signupForm.addEventListener('submit', async function(e){
+                e.preventDefault();
+                const name = document.getElementById('custName').value.trim();
+                const email = document.getElementById('custEmail2').value.trim();
+                const phone = document.getElementById('custPhone').value.trim();
+                const password = document.getElementById('custPassword2').value;
+                if(!name || !email || !password) return alert('name, email and password required');
+
+                if(serverAvailable()){
+                    try{
+                        const res = await fetch(SERVER_BASE + '/signup', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ role:'customer', id: email, name, contact: phone || email, email, password }) });
+                        const data = await res.json(); if(!res.ok) return alert('Signup error: '+(data.error||res.status));
+                        currentSignup = { requestId: data.requestId, id: email };
+                        if(data.otp){
+                            document.getElementById('custOtpMsg').textContent = `Demo OTP: ${data.otp} (auto-filled)`;
+                            const otpInput = document.getElementById('custOtpInput'); if(otpInput) otpInput.value = data.otp;
+                        } else {
+                            document.getElementById('custOtpMsg').textContent = `OTP sent to ${data.masked}`;
+                        }
+                        document.getElementById('cust-verify').classList.remove('d-none');
+                        signupForm.classList.add('d-none');
+                        return;
+                    }catch(err){ console.error(err); alert('Server error; using demo fallback'); }
+                }
+
+                // fallback: client-only
+                pendingLocalOtp = String(Math.floor(100000 + Math.random()*900000));
+                currentSignup = { id: email, name, password };
+                console.log('[client-demo] customer OTP', pendingLocalOtp);
+                document.getElementById('custOtpMsg').textContent = `Demo OTP: ${pendingLocalOtp} (auto-filled)`;
+                const otpInput = document.getElementById('custOtpInput'); if(otpInput) otpInput.value = pendingLocalOtp;
+                document.getElementById('cust-verify').classList.remove('d-none'); signupForm.classList.add('d-none');
+            });
+
+            document.getElementById('custVerifyBtn').addEventListener('click', async function(){
+                const val = document.getElementById('custOtpInput').value.trim(); if(!val) return alert('Enter OTP');
+                if(serverAvailable() && currentSignup && currentSignup.requestId){
+                    try{
+                        const res = await fetch(SERVER_BASE + '/verify-otp', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ requestId: currentSignup.requestId, otp: val }) });
+                        const data = await res.json(); if(!res.ok) return alert('Verify error: '+(data.error||res.status));
+                        alert('Customer account created: '+data.name);
+                        currentSignup = null; document.getElementById('cust-verify').classList.add('d-none'); signupForm.reset(); signupForm.classList.remove('d-none');
+                        document.querySelector('.nav-tabs .nav-link[data-bs-target="#cust-login"]').click();
+                        return;
+                    }catch(err){ console.error(err); alert('Server verify error'); }
+                }
+
+                // fallback
+                if(pendingLocalOtp !== val) return alert('Invalid OTP');
+                const customers = readCustomers();
+                customers[currentSignup.id] = { name: currentSignup.name, password: currentSignup.password };
+                writeCustomers(customers);
+                alert('Customer account created (demo)');
+                currentSignup = null; pendingLocalOtp = undefined; document.getElementById('cust-verify').classList.add('d-none'); signupForm.reset(); signupForm.classList.remove('d-none');
+                document.querySelector('.nav-tabs .nav-link[data-bs-target="#cust-login"]').click();
+            });
+
+            // Login
+            document.getElementById('customerLoginForm').addEventListener('submit', async function(e){
+                e.preventDefault();
+                const email = document.getElementById('custEmail').value.trim();
+                const pw = document.getElementById('custPassword').value;
+                if(serverAvailable()){
+                    try{
+                        const res = await fetch(SERVER_BASE + '/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ role:'customer', id: email, password: pw }) });
+                        const data = await res.json(); if(!res.ok) return alert('Login failed: '+(data.error||res.status));
+                        alert('Logged in (server): '+data.name);
+                        return;
+                    }catch(err){ console.error(err); alert('Server error; try demo fallback'); }
+                }
+                const customers = readCustomers(); const u = customers[email]; if(!u || u.password !== pw) return alert('Invalid credentials');
+                alert('Logged in (demo): ' + u.name);
+            });
+
+        })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
